@@ -38,7 +38,7 @@ public class CursoController {
                     .created(URI.create("/api/cursos/" + creado.getId()))
                     .body(creado);
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("Introduzca los datos del Curso correctamente", ex.getMessage()));
         }
     }
 }
