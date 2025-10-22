@@ -21,6 +21,9 @@ Cada participante desarrollará su propio módulo de forma independiente, siguie
 ## 🧱 Estructura del proyecto
 src/main/java/com/example/campusmanager/
 ┣ controller/ → controladores REST (endpoints)
+
 ┣ domain/ → entidades JPA (modelo de datos)
+
 ┣ repository/ → interfaces que extienden JpaRepository
+
 ┗ service/ → lógica de negocio
