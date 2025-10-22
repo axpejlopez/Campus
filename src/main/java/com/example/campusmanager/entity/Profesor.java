@@ -19,7 +19,7 @@ public class Profesor {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
-	private Long id;
+	private Integer id;
 	
 	@Column(name = "nombre", nullable = false)
 	@Size(min = 3, max = 100)
