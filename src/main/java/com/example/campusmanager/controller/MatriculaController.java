@@ -1,0 +1,42 @@
+package com.example.campusmanager.controller;
+
+import com.example.campusmanager.domain.Matricula;
+import com.example.campusmanager.service.MatriculaService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/matriculas")
+public class MatriculaController {
+
+    private final MatriculaService service;
+
+    public MatriculaController(MatriculaService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public List<Matricula> getAll() {
+        return service.listarTodas();
+    }
+
+    @PostMapping
+    public ResponseEntity<?> crear(@RequestBody Map<String, Object> body) {
+        try {
+            Long alumnoId = ((Number) body.get("alumnoId")).longValue();
+            Long cursoId = ((Number) body.get("cursoId")).longValue();
+            LocalDate fecha = LocalDate.parse(body.get("fechaMatricula").toString());
+
+            Matricula creada = service.crear(alumnoId, cursoId, fecha);
+            return ResponseEntity.created(URI.create("/api/matriculas/" + creada.getId())).body(creada);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("La matricula no es la correcta", e.getMessage()));
+        }
+    }
+}
