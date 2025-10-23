@@ -39,4 +39,17 @@ public class MatriculaController {
             return ResponseEntity.badRequest().body(Map.of("La matricula no es la correcta", e.getMessage()));
         }
     }
+    @PostMapping("/alumno/{alumnoId}/curso/{cursoId}")
+    public ResponseEntity<?> matricularAlumnoEnCurso(
+            @PathVariable Long alumnoId,
+            @PathVariable Long cursoId) {
+        try {
+            Matricula matricula = service.crear(alumnoId, cursoId, LocalDate.now());
+            return ResponseEntity
+                    .created(URI.create("/api/matriculas/" + matricula.getId()))
+                    .body(matricula);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
