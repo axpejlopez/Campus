@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,5 +60,40 @@ class MatriculaServiceTest {
         when(repo.existsByAlumno_IdAndCurso_Id(1L, 2L)).thenReturn(true);
         var ex = assertThrows(IllegalArgumentException.class, () -> service.crear(1L, 2L, LocalDate.now()));
         assertEquals("El alumno ya está matriculado en ese curso.", ex.getMessage());
+    }
+
+    // 🔹 Nuevo test: obtener alumnos por curso
+    @Test
+    void obtenerAlumnosPorCurso_ok() {
+        Alumno alumno1 = new Alumno();
+        alumno1.setId(1L);
+        alumno1.setNombre("María");
+
+        Alumno alumno2 = new Alumno();
+        alumno2.setId(2L);
+        alumno2.setNombre("Carlos");
+
+        Curso curso = new Curso();
+        curso.setId(10L);
+
+        Matricula m1 = new Matricula(alumno1, curso, LocalDate.now());
+        Matricula m2 = new Matricula(alumno2, curso, LocalDate.now());
+
+        when(cursoRepo.findById(10L)).thenReturn(Optional.of(curso));
+        when(repo.findByCurso_Id(10L)).thenReturn(List.of(m1, m2));
+
+        List<Alumno> resultado = service.obtenerAlumnosPorCurso(10L);
+
+        assertEquals(2, resultado.size());
+        assertEquals("María", resultado.get(0).getNombre());
+        assertEquals("Carlos", resultado.get(1).getNombre());
+    }
+
+    @Test
+    void obtenerAlumnosPorCurso_cursoNoEncontrado() {
+        when(cursoRepo.findById(99L)).thenReturn(Optional.empty());
+
+        var ex = assertThrows(IllegalArgumentException.class, () -> service.obtenerAlumnosPorCurso(99L));
+        assertEquals("Curso no encontrado.", ex.getMessage());
     }
 }
