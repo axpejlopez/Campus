@@ -27,7 +27,7 @@ class ProfesorServiceTest {
     private ProfesorRepository profesorRepository;
 
     @Mock
-    private CursoRepository cursoRepository;
+    private CursoRepository cursoRepository; // aunque no se usa directamente en cursosProfesor(), lo dejamos por si acaso
 
     @InjectMocks
     private ProfesorService profesorService;
@@ -47,70 +47,70 @@ class ProfesorServiceTest {
         profesorDTO.especialidad = "Matemáticas";
     }
 
-    // ----------------------------
-    // Test: getProfesores()
-    // ----------------------------
+    // ========================================================
+    // 1. Test: getProfesores()
+    // ========================================================
     @Test
-    void getProfesores_ReturnsListOfProfesores() {
+    void getProfesores_ReturnsAllProfesores() {
         // Given
-        List<Profesor> profesores = Arrays.asList(profesor);
-        when(profesorRepository.findAll()).thenReturn(profesores);
+        List<Profesor> lista = Arrays.asList(profesor);
+        when(profesorRepository.findAll()).thenReturn(lista);
 
         // When
-        List<Profesor> result = profesorService.getProfesores();
+        List<Profesor> resultado = profesorService.getProfesores();
 
         // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getNombre()).isEqualTo("Ana García");
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getNombre()).isEqualTo("Ana García");
         verify(profesorRepository).findAll();
     }
 
-    // ----------------------------
-    // Test: createProfesor() - éxito
-    // ----------------------------
+    // ========================================================
+    // 2. Test: createProfesor() - con datos válidos
+    // ========================================================
     @Test
     void createProfesor_ValidDTO_ReturnsSavedProfesor() {
         // Given
         when(profesorRepository.save(any(Profesor.class))).thenReturn(profesor);
 
         // When
-        Profesor result = profesorService.createProfesor(profesorDTO);
+        Profesor resultado = profesorService.createProfesor(profesorDTO);
 
         // Then
-        assertThat(result.getNombre()).isEqualTo("Ana García");
-        assertThat(result.getEspecialidad()).isEqualTo("Matemáticas");
+        assertThat(resultado.getNombre()).isEqualTo("Ana García");
+        assertThat(resultado.getEspecialidad()).isEqualTo("Matemáticas");
         verify(profesorRepository).save(any(Profesor.class));
     }
 
-    // ----------------------------
-    // Test: createProfesor() - nombre vacío → excepción
-    // ----------------------------
+    // ========================================================
+    // 3. Test: createProfesor() - nombre vacío → excepción
+    // ========================================================
     @Test
     void createProfesor_EmptyName_ThrowsIllegalArgumentException() {
         // Given
-        ProfesorDTO dto = new ProfesorDTO();
-        dto.nombre = ""; // vacío
-        dto.especialidad = "Física";
+        ProfesorDTO dtoInvalido = new ProfesorDTO();
+        dtoInvalido.nombre = ""; // vacío
+        dtoInvalido.especialidad = "Física";
 
         // When + Then
-        assertThatThrownBy(() -> profesorService.createProfesor(dto))
+        assertThatThrownBy(() -> profesorService.createProfesor(dtoInvalido))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("El nombre es obligatorio.");
     }
 
-    // ----------------------------
-    // Test: cursosProfesor() - éxito
-    // ----------------------------
+    // ========================================================
+    // 4. Test: cursosProfesor() - profesor con cursos
+    // ========================================================
     @Test
-    void cursosProfesor_ProfesorExists_ReturnsCursosProfesorDTO() {
+    void cursosProfesor_ProfesorConCursos_ReturnsListaDeCursos() {
         // Given
         Curso curso1 = new Curso();
         curso1.setTitulo("Álgebra");
-        curso1.setDescripcion("Curso de álgebra básica");
+        curso1.setDescripcion("Curso básico de álgebra");
 
         Curso curso2 = new Curso();
         curso2.setTitulo("Cálculo");
-        curso2.setDescripcion("Curso de cálculo avanzado");
+        curso2.setDescripcion("Cálculo avanzado");
 
         profesor.setCursos(Arrays.asList(curso1, curso2));
 
@@ -118,20 +118,44 @@ class ProfesorServiceTest {
                 .thenReturn(Optional.of(profesor));
 
         // When
-        CursosProfesorDTO result = profesorService.cursosProfesor("Ana García");
+        List<CursosProfesorDTO> resultado = profesorService.cursosProfesor("Ana García");
 
         // Then
-        assertThat(result.nombreProfesor).isEqualTo("Ana García");
-        assertThat(result.cursos).hasSize(2);
-        assertThat(result.cursos).containsEntry("Álgebra", "Curso de álgebra básica");
-        assertThat(result.cursos).containsEntry("Cálculo", "Curso de cálculo avanzado");
+        assertThat(resultado).hasSize(2);
+        assertThat(resultado.get(0).nombreProfesor).isEqualTo("Ana García");
+        assertThat(resultado.get(0).tituloCurso).isEqualTo("Álgebra");
+        assertThat(resultado.get(1).tituloCurso).isEqualTo("Cálculo");
+        assertThat(resultado.get(0).profesor_id).isEqualTo(1L);
     }
 
-    // ----------------------------
-    // Test: cursosProfesor() - profesor no existe → excepción
-    // ----------------------------
+    // ========================================================
+    // 5. Test: cursosProfesor() - profesor SIN cursos
+    // ========================================================
     @Test
-    void cursosProfesor_ProfesorNotFound_ThrowsRuntimeException() {
+    void cursosProfesor_ProfesorSinCursos_ReturnsListaConAsteriscos() {
+        // Given
+        profesor.setCursos(new ArrayList<>()); // lista vacía
+
+        when(profesorRepository.findByNombre("Ana García"))
+                .thenReturn(Optional.of(profesor));
+
+        // When
+        List<CursosProfesorDTO> resultado = profesorService.cursosProfesor("Ana García");
+
+        // Then
+        assertThat(resultado).hasSize(1);
+        CursosProfesorDTO dto = resultado.get(0);
+        assertThat(dto.nombreProfesor).isEqualTo("Ana García");
+        assertThat(dto.tituloCurso).isEqualTo("*****");
+        assertThat(dto.descripcionCurso).isEqualTo("*****");
+        assertThat(dto.profesor_id).isEqualTo(1L);
+    }
+
+    // ========================================================
+    // 6. Test: cursosProfesor() - profesor no existe → excepción
+    // ========================================================
+    @Test
+    void cursosProfesor_ProfesorNoEncontrado_ThrowsRuntimeException() {
         // Given
         when(profesorRepository.findByNombre("Desconocido"))
                 .thenReturn(Optional.empty());
