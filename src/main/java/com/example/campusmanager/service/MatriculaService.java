@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MatriculaService {
@@ -44,5 +45,18 @@ public class MatriculaService {
 
         Matricula matricula = new Matricula(alumno, curso, fechaMatricula);
         return repo.save(matricula);
+    }
+
+    // 🔹 NUEVO MÉTODO: obtener alumnos de un curso
+    public List<Alumno> obtenerAlumnosPorCurso(Long cursoId) {
+        // Verificamos que el curso exista
+        Curso curso = cursoRepo.findById(cursoId)
+                .orElseThrow(() -> new IllegalArgumentException("Curso no encontrado."));
+
+        // Buscamos las matrículas y extraemos los alumnos
+        return repo.findByCurso_Id(curso.getId())
+                   .stream()
+                   .map(Matricula::getAlumno)
+                   .collect(Collectors.toList());
     }
 }

@@ -1,5 +1,6 @@
 package com.example.campusmanager.controller;
 
+import com.example.campusmanager.domain.Alumno;
 import com.example.campusmanager.domain.Matricula;
 import com.example.campusmanager.service.MatriculaService;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,7 @@ public class MatriculaController {
             return ResponseEntity.badRequest().body(Map.of("La matricula no es la correcta", e.getMessage()));
         }
     }
+
     @PostMapping("/alumno/{alumnoId}/curso/{cursoId}")
     public ResponseEntity<?> matricularAlumnoEnCurso(
             @PathVariable Long alumnoId,
@@ -50,6 +52,17 @@ public class MatriculaController {
                     .body(matricula);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 🔹 NUEVO ENDPOINT: obtener alumnos por curso
+    @GetMapping("/curso/{cursoId}/alumnos")
+    public ResponseEntity<?> obtenerAlumnosPorCurso(@PathVariable Long cursoId) {
+        try {
+            List<Alumno> alumnos = service.obtenerAlumnosPorCurso(cursoId);
+            return ResponseEntity.ok(alumnos);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         }
     }
 }
