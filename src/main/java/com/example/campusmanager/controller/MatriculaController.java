@@ -65,4 +65,22 @@ public class MatriculaController {
             return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         }
     }
+
+    // 🔹 NUEVO ENDPOINT: generar PDF de alumnos por curso
+    @GetMapping("/curso/{cursoId}/pdf")
+    public ResponseEntity<byte[]> generarPdfPorCurso(@PathVariable Long cursoId) {
+        try {
+            byte[] pdfBytes = service.generarPdfAlumnosPorCurso(cursoId);
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=alumnos_curso_" + cursoId + ".pdf")
+                    .body(pdfBytes);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
 }
