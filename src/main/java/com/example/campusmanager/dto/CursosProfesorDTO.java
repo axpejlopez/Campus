@@ -7,8 +7,10 @@ import com.example.campusmanager.domain.Curso;
 
 public class CursosProfesorDTO {
 	
+	public Long profesor_id;
 	public String nombreProfesor;
-	public Map<String,String> cursos; //guarda los titulos y la descriptción de los cursos
+	public String tituloCurso; 
+	public String descripcionCurso;
 	
 
 }
