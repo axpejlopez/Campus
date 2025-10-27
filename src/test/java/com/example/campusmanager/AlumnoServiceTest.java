@@ -69,4 +69,50 @@ public class AlumnoServiceTest {
         // 🔹 Verificamos que se haya llamado a save() una vez
         verify(alumnoRepository, times(1)).save(alumno);
     }
+    
+    // 🔹 NUEVOS TESTS: actualización de alumnos
+    @Test
+    void testActualizarAlumno_OK() {
+        Alumno existente = new Alumno("Carlos Ruiz", "carlos@example.com", LocalDate.of(1999, 8, 30));
+        existente.setId(2L);
+
+        Alumno cambios = new Alumno();
+        cambios.setEmail("nuevo@correo.com");
+
+        when(alumnoRepository.findById(2L)).thenReturn(java.util.Optional.of(existente));
+        when(alumnoRepository.save(existente)).thenReturn(existente);
+
+        String resultado = alumnoService.actualizarAlumno(2L, cambios);
+
+        assertEquals("✅ Alumno actualizado correctamente.", resultado);
+        verify(alumnoRepository, times(1)).save(existente);
+    }
+
+    @Test
+    void testActualizarAlumno_SinCambios() {
+        Alumno existente = new Alumno("Carlos Ruiz", "carlos@example.com", LocalDate.of(1999, 8, 30));
+        existente.setId(2L);
+
+        Alumno sinCambios = new Alumno("Carlos Ruiz", "carlos@example.com", LocalDate.of(1999, 8, 30));
+
+        when(alumnoRepository.findById(2L)).thenReturn(java.util.Optional.of(existente));
+
+        String resultado = alumnoService.actualizarAlumno(2L, sinCambios);
+
+        assertEquals("❌ No se realizaron cambios. El alumno no ha sido modificado.", resultado);
+        verify(alumnoRepository, times(0)).save(existente);
+    }
+
+    @Test
+    void testActualizarAlumno_NoExiste() {
+        when(alumnoRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        RuntimeException ex = org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> {
+            alumnoService.actualizarAlumno(99L, new Alumno());
+        });
+
+        assertEquals("Alumno no encontrado", ex.getMessage());
+        verify(alumnoRepository, times(0)).save(org.mockito.Mockito.any());
+    }
+
 }

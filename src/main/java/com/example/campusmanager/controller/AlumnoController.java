@@ -27,4 +27,9 @@ public class AlumnoController {
     public Alumno crearAlumno(@RequestBody Alumno alumno) {
         return alumnoService.crearAlumno(alumno);
     }
+ // ✅ Actualizar datos de un alumno existente
+    @PutMapping("/{id}")
+    public String actualizarAlumno(@PathVariable Long id, @RequestBody Alumno alumnoNuevo) {
+        return alumnoService.actualizarAlumno(id, alumnoNuevo);
+    }
 }
