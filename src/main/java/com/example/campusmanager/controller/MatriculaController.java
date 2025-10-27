@@ -2,6 +2,7 @@ package com.example.campusmanager.controller;
 
 import com.example.campusmanager.domain.Alumno;
 import com.example.campusmanager.domain.Matricula;
+import com.example.campusmanager.dto.AlumnoPorCursoDTO;
 import com.example.campusmanager.service.MatriculaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -57,10 +58,12 @@ public class MatriculaController {
 
     // 🔹 NUEVO ENDPOINT: obtener alumnos por curso
     @GetMapping("/curso/{cursoId}/alumnos")
-    public ResponseEntity<?> obtenerAlumnosPorCurso(@PathVariable Long cursoId) {
+    public ResponseEntity<?> obtenerAlumnosPorCurso(@PathVariable("cursoId") Long cursoId) {
+    	
+    	System.out.println("Nombre del curso: " + cursoId);
         try {
-            List<Alumno> alumnos = service.obtenerAlumnosPorCurso(cursoId);
-            return ResponseEntity.ok(alumnos);
+            List<AlumnoPorCursoDTO> alumnosPorCursoDTO = service.obtenerAlumnosPorCurso(cursoId);
+            return ResponseEntity.ok(alumnosPorCursoDTO);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         }
