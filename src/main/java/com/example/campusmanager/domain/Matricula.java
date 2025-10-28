@@ -1,9 +1,12 @@
 package com.example.campusmanager.domain;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@Data
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "matricula")
@@ -27,6 +30,13 @@ public class Matricula {
 
     @Column(name = "fecha_matricula", nullable = false)
     private LocalDate fechaMatricula;
+    
+    //Esto nos permite ver la notaFinal que se ha sacado en esta matricula, ademas aplico cascada
+    @OneToOne(mappedBy = "matricula", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    //Evito que muestre matricula en el objeto Notas
+    @JsonIgnoreProperties("matricula")
+    private Notas notas;
+    
 
     public Matricula() {}
 

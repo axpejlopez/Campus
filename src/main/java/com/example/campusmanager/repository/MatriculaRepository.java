@@ -14,5 +14,8 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
     // 🔹 NUEVO MÉTODO: obtener todas las matrículas de un curso concreto
     List<Matricula> findByCurso_Id(Long cursoId);
 
+	List<Matricula> findAllByAlumno_id(Long alumnoId);
+	
+
 	
 }
