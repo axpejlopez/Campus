@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 
 import com.example.campusmanager.domain.Matricula;
 import com.example.campusmanager.domain.Notas;
-import com.example.campusmanager.dto.NotaAddUpdate;
+import com.example.campusmanager.dto.NotaAddUpdateDTO;
 import com.example.campusmanager.dto.NotaDTO;
-import com.example.campusmanager.dto.NotaDelete;
+import com.example.campusmanager.dto.NotaDeleteDTO;
 import com.example.campusmanager.exception.Excepcion;
 import com.example.campusmanager.repository.MatriculaRepository;
 import com.example.campusmanager.repository.NotasRepository;
@@ -63,7 +63,7 @@ public class NotasService {
 	}
 	
 	
-	public NotaDTO newNotaAlumnoCurso(NotaAddUpdate datosNota) {
+	public NotaDTO newNotaAlumnoCurso(NotaAddUpdateDTO datosNota) {
 		
 		Optional<Matricula> matricula = matriculaRepository.findAllByAlumnoIdAndCursoId(datosNota.alumnoId, datosNota.cursoId);
 										
@@ -95,7 +95,7 @@ public class NotasService {
 		return notaDTO;
 	}
 	
-	public NotaDTO updateNotaAlumnoCurso(NotaAddUpdate datosNota) {
+	public NotaDTO updateNotaAlumnoCurso(NotaAddUpdateDTO datosNota) {
 		Optional<Matricula> matricula = matriculaRepository.findAllByAlumnoIdAndCursoId(datosNota.alumnoId, datosNota.cursoId);
 		
 		if (matricula.isEmpty()) {
@@ -120,7 +120,7 @@ public class NotasService {
 			
 	}
 	
-	public Boolean deleteNotaAlumnoCurso(NotaDelete datosAlumnoCurso) {
+	public Boolean deleteNotaAlumnoCurso(NotaDeleteDTO datosAlumnoCurso) {
 		
 		Optional<Matricula> matricula = matriculaRepository.findAllByAlumnoIdAndCursoId(datosAlumnoCurso.alumnoId, datosAlumnoCurso.cursoId);
 		

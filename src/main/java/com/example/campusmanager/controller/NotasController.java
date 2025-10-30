@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.campusmanager.dto.NotaAddUpdate;
+import com.example.campusmanager.dto.NotaAddUpdateDTO;
 import com.example.campusmanager.dto.NotaDTO;
-import com.example.campusmanager.dto.NotaDelete;
+import com.example.campusmanager.dto.NotaDeleteDTO;
 import com.example.campusmanager.exception.Excepcion;
 import com.example.campusmanager.service.NotasService;
 
@@ -72,7 +72,7 @@ public class NotasController {
 	
 		
 	@PostMapping("/newNotaAlumnoCurso")
-	public ResponseEntity<?> newNotaAlumnoCurso(@RequestBody NotaAddUpdate datosNota){
+	public ResponseEntity<?> newNotaAlumnoCurso(@RequestBody NotaAddUpdateDTO datosNota){
 		
 		if(datosNota.notaFinal.intValue() < 0 || datosNota.notaFinal.intValue() > 10 ) {
 			throw new Excepcion(HttpStatus.NOT_FOUND, "Nota no valida", "La nota no se encuentra entre 0 y 10.");
@@ -96,7 +96,7 @@ public class NotasController {
 	
 	
 	@PutMapping("/updateNotaAlumnoCurso")
-	public ResponseEntity<?> updateNotaAlumnoCurso(@RequestBody NotaAddUpdate datosNota){
+	public ResponseEntity<?> updateNotaAlumnoCurso(@RequestBody NotaAddUpdateDTO datosNota){
 		
 		if(datosNota.notaFinal.intValue() < 0 || datosNota.notaFinal.intValue() > 10 ) {
 			throw new Excepcion(HttpStatus.NOT_FOUND, "Nota no valida", "La nota no se encuentra entre 0 y 10.");
@@ -110,7 +110,7 @@ public class NotasController {
 	
 	
 	@DeleteMapping("/deleteNotaAlumnoCurso")
-	public ResponseEntity<?> deleteNotaAlumnoCurso(@RequestBody NotaDelete datosAlumnoCurso){
+	public ResponseEntity<?> deleteNotaAlumnoCurso(@RequestBody NotaDeleteDTO datosAlumnoCurso){
 		
 		if(notasService.deleteNotaAlumnoCurso(datosAlumnoCurso)) {
 			return ResponseEntity.ok("Nota borrada correctamente.");
