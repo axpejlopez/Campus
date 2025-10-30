@@ -5,6 +5,7 @@ import com.example.campusmanager.domain.Matricula;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
@@ -15,6 +16,10 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
     List<Matricula> findByCurso_Id(Long cursoId);
 
 	List<Matricula> findAllByAlumno_id(Long alumnoId);
+
+	Optional<Matricula> findAllByAlumnoIdAndCursoId(Long alumnoId, Long cursoId);
+
+	
 	
 
 	
