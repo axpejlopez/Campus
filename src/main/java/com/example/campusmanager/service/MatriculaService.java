@@ -12,6 +12,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// 🔹 Librerías para generar PDF
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+import java.io.ByteArrayOutputStream;
+import java.util.stream.Stream;
+
 @Service
 public class MatriculaService {
 
@@ -47,16 +53,60 @@ public class MatriculaService {
         return repo.save(matricula);
     }
 
-    // 🔹 NUEVO MÉTODO: obtener alumnos de un curso
+    // 🔹 Método existente: obtener alumnos de un curso
     public List<Alumno> obtenerAlumnosPorCurso(Long cursoId) {
-        // Verificamos que el curso exista
+        Curso curso = cursoRepo.findById(cursoId)
+                .orElseThrow(() -> new IllegalArgumentException("Curso no encontrado."));
+        return repo.findByCurso_Id(curso.getId())
+                .stream()
+                .map(Matricula::getAlumno)
+                .collect(Collectors.toList());
+    }
+
+    // 🔹 NUEVO MÉTODO: Generar PDF con los alumnos de un curso
+    public byte[] generarPdfAlumnosPorCurso(Long cursoId) {
         Curso curso = cursoRepo.findById(cursoId)
                 .orElseThrow(() -> new IllegalArgumentException("Curso no encontrado."));
 
-        // Buscamos las matrículas y extraemos los alumnos
-        return repo.findByCurso_Id(curso.getId())
-                   .stream()
-                   .map(Matricula::getAlumno)
-                   .collect(Collectors.toList());
+        List<Alumno> alumnos = obtenerAlumnosPorCurso(cursoId);
+
+        Document document = new Document(PageSize.A4);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
+            Paragraph title = new Paragraph("Alumnos matriculados en el curso: " + curso.getTitulo(), titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+
+            PdfPTable table = new PdfPTable(3);
+            table.setWidthPercentage(100);
+            table.setWidths(new int[]{2, 4, 5});
+
+            Font headFont = new Font(Font.HELVETICA, 12, Font.BOLD);
+            Stream.of("ID", "Nombre", "Email").forEach(col -> {
+                PdfPCell cell = new PdfPCell(new Phrase(col, headFont));
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(cell);
+            });
+
+            for (Alumno alumno : alumnos) {
+                table.addCell(alumno.getId().toString());
+                table.addCell(alumno.getNombre());
+                table.addCell(alumno.getEmail());
+            }
+
+            document.add(table);
+            document.close();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar el PDF: " + e.getMessage(), e);
+        }
+
+        return out.toByteArray();
     }
 }
