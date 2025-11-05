@@ -1,90 +1,59 @@
 package com.example.campusmanager.controller;
 
-import java.net.http.HttpHeaders;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.example.campusmanager.domain.Profesor;
-import com.example.campusmanager.dto.CursosProfesorDTO;
+import com.example.campusmanager.dto.AsignaturasProfesorDTO;
 import com.example.campusmanager.dto.ProfesorDTO;
 import com.example.campusmanager.service.ProfesorService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/profesores")
+@RequestMapping("/api/profesores")
+@RequiredArgsConstructor
 public class ProfesorController {
 
-	@Autowired
-	private ProfesorService profesorService;
+    private final ProfesorService profesorService;
 
-	@GetMapping("/getAll")
-	public List<Profesor> getProfesores() {
-		return profesorService.getProfesores();
+    // ✅ 1. Listar todos los profesores
+    @GetMapping
+    public ResponseEntity<List<Profesor>> listarProfesores() {
+        return ResponseEntity.ok(profesorService.listarProfesores());
+    }
 
-	}
+    // ✅ 2. Crear un nuevo profesor
+    @PostMapping
+    public ResponseEntity<Profesor> crearProfesor(@RequestBody ProfesorDTO dto) {
+        Profesor nuevo = profesorService.crearProfesor(dto);
+        return ResponseEntity.ok(nuevo);
+    }
 
-	@PostMapping("/createProfesor")
-	public Profesor createProfesor(@RequestBody ProfesorDTO profesorDTO) {
+    // ✅ 3. Obtener las asignaturas que imparte un profesor
+    @GetMapping("/{nombre}/asignaturas")
+    public ResponseEntity<List<AsignaturasProfesorDTO>> obtenerAsignaturasPorProfesor(@PathVariable String nombre) {
+        List<AsignaturasProfesorDTO> asignaturas = profesorService.asignaturasPorProfesor(nombre);
+        return ResponseEntity.ok(asignaturas);
+    }
 
-		System.out.println(profesorDTO.nombre + " " + profesorDTO.especialidad);
+    // ✅ 4. Exportar las asignaturas del profesor en CSV
+    @GetMapping(value = "/{nombre}/asignaturas.csv", produces = "text/csv")
+    public ResponseEntity<String> exportarAsignaturasCSV(@PathVariable String nombre) {
+        List<AsignaturasProfesorDTO> asignaturas = profesorService.asignaturasPorProfesor(nombre);
 
-		return profesorService.createProfesor(profesorDTO);
-	}
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID;NombreProfesor;Asignatura;Curso\n");
 
-	/**
-	 * 
-	 * @param nombre
-	 * @return
-	 * 
-	 *         Devuelve los cursos que da un profesor
-	 */
-	@GetMapping("/cursosProfesor")
-	public List<CursosProfesorDTO> cursosProfesor(@RequestBody String nombre) {
+        for (AsignaturasProfesorDTO dto : asignaturas) {
+            csv.append(dto.getProfesorId()).append(";")
+               .append(dto.getNombreProfesor()).append(";")
+               .append(dto.getTituloAsignatura()).append(";")
+               .append(dto.getCurso()).append("\n");
+        }
 
-		return profesorService.cursosProfesor(nombre);
-	}
-
-	/**
-	 * Vamos ha hacer que devuelva los cursos por profesor en un fichero csv
-	 * 
-	 */
-	@GetMapping(value = "/cursosProfesor.csv", produces = MediaType.TEXT_PLAIN_VALUE)
-	public ResponseEntity<String> descargaCursosProfesorCSV(@RequestBody String nombre) {
-		List<CursosProfesorDTO> listCursosProfesorDTO = profesorService.cursosProfesor(nombre);
-
-		StringBuilder csv = new StringBuilder();
-		csv.append("ID;Nombre;Título;Descripcion\n");
-
-		for (CursosProfesorDTO c : listCursosProfesorDTO) {
-			csv.append(escapeCsv(c.profesor_id.toString())).append(";").append(escapeCsv(c.nombreProfesor)).append(";")
-					.append(escapeCsv(c.tituloCurso)).append(";").append(escapeCsv(c.descripcionCurso)).append("\n");
-
-		}
-
-		return ResponseEntity.ok()
-				.header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=profesores.csv")
-				.contentType(MediaType.parseMediaType("text/csv")).body(csv.toString());
-
-	}
-
-	// Método auxiliar para escapar comas, comillas y saltos de línea
-	private String escapeCsv(String value) {
-		if (value == null)
-			return "";
-		if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-			return "\"" + value.replace("\"", "\"\"") + "\"";
-		}
-		return value;
-	}
-
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=asignaturas_profesor.csv")
+                .body(csv.toString());
+    }
 }

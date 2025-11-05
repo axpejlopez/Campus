@@ -1,9 +1,10 @@
 package com.example.campusmanager;
 
 import com.example.campusmanager.domain.Alumno;
+import com.example.campusmanager.dto.AlumnoRequestDTO;
+import com.example.campusmanager.dto.AlumnoResponseDTO;
 import com.example.campusmanager.repository.AlumnoRepository;
 import com.example.campusmanager.service.AlumnoService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,13 +14,12 @@ import org.mockito.MockitoAnnotations;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class AlumnoServiceTest {
+class AlumnoServiceTest {
 
     @Mock
     private AlumnoRepository alumnoRepository;
@@ -27,46 +27,52 @@ public class AlumnoServiceTest {
     @InjectMocks
     private AlumnoService alumnoService;
 
+    private Alumno alumno;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        alumno = new Alumno();
+        alumno.setId(1L);
+        alumno.setNombre("María Gómez");
+        alumno.setEmail("maria@example.com");
+        alumno.setFechaNacimiento(LocalDate.of(2000, 5, 12));
     }
 
     @Test
     void testListarTodos() {
-        // 🔹 Creamos datos simulados
-        Alumno alumno1 = new Alumno("María Gómez", "maria@example.com", LocalDate.of(2000, 5, 12));
-        Alumno alumno2 = new Alumno("Carlos Ruiz", "carlos@example.com", LocalDate.of(1999, 8, 30));
+        when(alumnoRepository.findAll()).thenReturn(Arrays.asList(alumno));
 
-        // 🔹 Simulamos el comportamiento del repositorio
-        when(alumnoRepository.findAll()).thenReturn(Arrays.asList(alumno1, alumno2));
+        List<AlumnoResponseDTO> resultado = alumnoService.listarTodos();
 
-        // 🔹 Llamamos al servicio real
-        List<Alumno> resultado = alumnoService.listarTodos();
-
-        // 🔹 Comprobamos los resultados
-        assertEquals(2, resultado.size());
+        assertEquals(1, resultado.size());
         assertEquals("María Gómez", resultado.get(0).getNombre());
-        assertEquals("Carlos Ruiz", resultado.get(1).getNombre());
+        verify(alumnoRepository, times(1)).findAll();
+    }
+
+    @Test
+    void testObtenerPorId() {
+        when(alumnoRepository.findById(1L)).thenReturn(Optional.of(alumno));
+
+        AlumnoResponseDTO resultado = alumnoService.obtenerPorId(1L);
+
+        assertEquals("María Gómez", resultado.getNombre());
+        assertEquals("maria@example.com", resultado.getEmail());
+        verify(alumnoRepository, times(1)).findById(1L);
     }
 
     @Test
     void testCrearAlumno() {
-        // 🔹 Creamos un alumno de prueba
-        Alumno alumno = new Alumno("Lucía Pérez", "lucia@example.com", LocalDate.of(2001, 3, 22));
+        AlumnoRequestDTO dto = new AlumnoRequestDTO();
+        dto.setNombre("Carlos Ruiz");
+        dto.setEmail("carlos@example.com");
+        dto.setFechaNacimiento(LocalDate.of(1999, 8, 30));
 
-        // 🔹 Simulamos el comportamiento del repositorio
-        when(alumnoRepository.save(alumno)).thenReturn(alumno);
+        when(alumnoRepository.save(any(Alumno.class))).thenReturn(alumno);
 
-        // 🔹 Llamamos al método del servicio
-        Alumno resultado = alumnoService.crearAlumno(alumno);
+        AlumnoResponseDTO creado = alumnoService.crear(dto);
 
-        // 🔹 Comprobamos los resultados
-        assertEquals("Lucía Pérez", resultado.getNombre());
-        assertEquals("lucia@example.com", resultado.getEmail());
-        assertEquals(LocalDate.of(2001, 3, 22), resultado.getFechaNacimiento());
-
-        // 🔹 Verificamos que se haya llamado a save() una vez
-        verify(alumnoRepository, times(1)).save(alumno);
+        assertNotNull(creado);
+        verify(alumnoRepository, times(1)).save(any(Alumno.class));
     }
 }

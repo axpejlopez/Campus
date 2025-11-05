@@ -3,7 +3,7 @@ package com.example.campusmanager.dto;
 import lombok.Data;
 
 @Data
-public class ProfesorDTO {
+public class CursoUpdateDTO {
     private String nombre;
-    private String especialidad;
+    private Long profesorId;
 }

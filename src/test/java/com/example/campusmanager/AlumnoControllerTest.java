@@ -1,7 +1,8 @@
 package com.example.campusmanager;
 
 import com.example.campusmanager.controller.AlumnoController;
-import com.example.campusmanager.domain.Alumno;
+import com.example.campusmanager.dto.AlumnoRequestDTO;
+import com.example.campusmanager.dto.AlumnoResponseDTO;
 import com.example.campusmanager.service.AlumnoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,12 +14,10 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class AlumnoControllerTest {
+class AlumnoControllerTest {
 
     @Mock
     private AlumnoService alumnoService;
@@ -33,36 +32,44 @@ public class AlumnoControllerTest {
 
     @Test
     void testListarAlumnos() {
-        // 🔹 Datos simulados
-        Alumno alumno1 = new Alumno("María Gómez", "maria@example.com", LocalDate.of(2000, 5, 12));
-        Alumno alumno2 = new Alumno("Carlos Ruiz", "carlos@example.com", LocalDate.of(1999, 8, 30));
+        // Datos simulados
+        AlumnoResponseDTO alumno1 = new AlumnoResponseDTO(1L, "María Gómez", "maria@example.com", LocalDate.of(2000, 5, 12));
+        AlumnoResponseDTO alumno2 = new AlumnoResponseDTO(2L, "Carlos Ruiz", "carlos@example.com", LocalDate.of(1999, 8, 30));
 
         when(alumnoService.listarTodos()).thenReturn(Arrays.asList(alumno1, alumno2));
 
-        // 🔹 Llamada al controlador
-        List<Alumno> resultado = alumnoController.listarTodos();
+        // Llamada al método real del controller
+        List<AlumnoResponseDTO> resultado = alumnoController.listar();
 
-        // 🔹 Verificaciones
+        // Comprobaciones
+        assertNotNull(resultado);
         assertEquals(2, resultado.size());
         assertEquals("María Gómez", resultado.get(0).getNombre());
-        assertEquals("Carlos Ruiz", resultado.get(1).getNombre());
+        verify(alumnoService, times(1)).listarTodos();
     }
 
     @Test
     void testCrearAlumno() {
-        // 🔹 Alumno de prueba
-        Alumno alumno = new Alumno("Lucía Pérez", "lucia@example.com", LocalDate.of(2001, 3, 22));
+        // Petición de entrada simulada
+        AlumnoRequestDTO request = new AlumnoRequestDTO();
+        request.setNombre("Lucía Pérez");
+        request.setEmail("lucia@example.com");
+        request.setFechaNacimiento(LocalDate.of(2001, 3, 22));
 
-        when(alumnoService.crearAlumno(alumno)).thenReturn(alumno);
+        // Respuesta simulada del servicio
+        AlumnoResponseDTO response = new AlumnoResponseDTO(10L, "Lucía Pérez", "lucia@example.com", LocalDate.of(2001, 3, 22));
 
-        // 🔹 Llamada al controlador
-        Alumno resultado = alumnoController.crearAlumno(alumno);
+        when(alumnoService.crear(any(AlumnoRequestDTO.class))).thenReturn(response);
 
-        // 🔹 Verificaciones
-        assertEquals("Lucía Pérez", resultado.getNombre());
-        assertEquals("lucia@example.com", resultado.getEmail());
+        // Llamada al método del controller
+        Object resultado = alumnoController.crear(request).getBody();
 
-        // 🔹 Verifica que se llamó una vez al servicio
-        verify(alumnoService, times(1)).crearAlumno(alumno);
+        assertTrue(resultado instanceof AlumnoResponseDTO);
+        AlumnoResponseDTO dto = (AlumnoResponseDTO) resultado;
+
+        assertEquals("Lucía Pérez", dto.getNombre());
+        assertEquals("lucia@example.com", dto.getEmail());
+
+        verify(alumnoService, times(1)).crear(any(AlumnoRequestDTO.class));
     }
 }
