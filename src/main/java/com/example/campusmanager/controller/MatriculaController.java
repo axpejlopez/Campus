@@ -2,6 +2,8 @@ package com.example.campusmanager.controller;
 
 import com.example.campusmanager.domain.Alumno;
 import com.example.campusmanager.domain.Matricula;
+import com.example.campusmanager.dto.MatriculaRequestDTO;
+import com.example.campusmanager.dto.MatriculaResponseDTO;
 import com.example.campusmanager.service.MatriculaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -83,4 +85,27 @@ public class MatriculaController {
             return ResponseEntity.internalServerError().body(null);
         }
     }
+    
+    @PostMapping("/dto")
+    public ResponseEntity<?> crearConDTO(@RequestBody MatriculaRequestDTO dto) {
+        try {
+            MatriculaResponseDTO creada = service.crearDesdeDTO(dto);
+            return ResponseEntity.created(URI.create("/api/matriculas/" + creada.getId())).body(creada);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+ // 🟢  Nuevo endpoint: obtener todas las matrículas de un alumno
+    @GetMapping("/alumno/{alumnoId}")
+    public ResponseEntity<?> obtenerMatriculasPorAlumno(@PathVariable Long alumnoId) {
+        try {
+            List<MatriculaResponseDTO> matriculas = service.obtenerMatriculasPorAlumno(alumnoId);
+            return ResponseEntity.ok(matriculas);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+
 }

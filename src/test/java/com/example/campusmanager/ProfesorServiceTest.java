@@ -1,10 +1,13 @@
 package com.example.campusmanager;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.util.*;
-
+import com.example.campusmanager.domain.Asignatura;
+import com.example.campusmanager.domain.Curso;
+import com.example.campusmanager.domain.Profesor;
+import com.example.campusmanager.dto.AsignaturasProfesorDTO;
+import com.example.campusmanager.dto.ProfesorDTO;
+import com.example.campusmanager.repository.AsignaturaRepository;
+import com.example.campusmanager.repository.ProfesorRepository;
+import com.example.campusmanager.service.ProfesorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,13 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.campusmanager.domain.Curso;
-import com.example.campusmanager.domain.Profesor;
-import com.example.campusmanager.dto.CursosProfesorDTO;
-import com.example.campusmanager.dto.ProfesorDTO;
-import com.example.campusmanager.repository.CursoRepository;
-import com.example.campusmanager.repository.ProfesorRepository;
-import com.example.campusmanager.service.ProfesorService;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProfesorServiceTest {
@@ -27,142 +29,121 @@ class ProfesorServiceTest {
     private ProfesorRepository profesorRepository;
 
     @Mock
-    private CursoRepository cursoRepository; // aunque no se usa directamente en cursosProfesor(), lo dejamos por si acaso
+    private AsignaturaRepository asignaturaRepository;
 
     @InjectMocks
     private ProfesorService profesorService;
 
     private Profesor profesor;
-    private ProfesorDTO profesorDTO;
+    private ProfesorDTO dto;
 
     @BeforeEach
     void setUp() {
         profesor = new Profesor();
         profesor.setId(1L);
-        profesor.setNombre("Ana García");
-        profesor.setEspecialidad("Matemáticas");
+        profesor.setNombre("Luis Pérez");
+        profesor.setEspecialidad("Historia");
 
-        profesorDTO = new ProfesorDTO();
-        profesorDTO.nombre = "Ana García";
-        profesorDTO.especialidad = "Matemáticas";
+        dto = new ProfesorDTO();
+        dto.setNombre("Luis Pérez");
+        dto.setEspecialidad("Historia");
     }
 
-    // ========================================================
-    // 1. Test: getProfesores()
-    // ========================================================
+    // ==========================================================
+    // 1️⃣ Test: listarProfesores()
+    // ==========================================================
     @Test
-    void getProfesores_ReturnsAllProfesores() {
-        // Given
-        List<Profesor> lista = Arrays.asList(profesor);
-        when(profesorRepository.findAll()).thenReturn(lista);
+    void listarProfesores_devuelveLista() {
+        when(profesorRepository.findAll()).thenReturn(Arrays.asList(profesor));
 
-        // When
-        List<Profesor> resultado = profesorService.getProfesores();
+        List<Profesor> resultado = profesorService.listarProfesores();
 
-        // Then
         assertThat(resultado).hasSize(1);
-        assertThat(resultado.get(0).getNombre()).isEqualTo("Ana García");
-        verify(profesorRepository).findAll();
+        assertThat(resultado.get(0).getNombre()).isEqualTo("Luis Pérez");
+        verify(profesorRepository, times(1)).findAll();
     }
 
-    // ========================================================
-    // 2. Test: createProfesor() - con datos válidos
-    // ========================================================
+    // ==========================================================
+    // 2️⃣ Test: crearProfesor() correcto
+    // ==========================================================
     @Test
-    void createProfesor_ValidDTO_ReturnsSavedProfesor() {
-        // Given
+    void crearProfesor_valido_guardadoCorrectamente() {
         when(profesorRepository.save(any(Profesor.class))).thenReturn(profesor);
 
-        // When
-        Profesor resultado = profesorService.createProfesor(profesorDTO);
+        Profesor creado = profesorService.crearProfesor(dto);
 
-        // Then
-        assertThat(resultado.getNombre()).isEqualTo("Ana García");
-        assertThat(resultado.getEspecialidad()).isEqualTo("Matemáticas");
+        assertThat(creado).isNotNull();
+        assertThat(creado.getNombre()).isEqualTo("Luis Pérez");
+        assertThat(creado.getEspecialidad()).isEqualTo("Historia");
         verify(profesorRepository).save(any(Profesor.class));
     }
 
-    // ========================================================
-    // 3. Test: createProfesor() - nombre vacío → excepción
-    // ========================================================
+    // ==========================================================
+    // 3️⃣ Test: crearProfesor() sin nombre → excepción
+    // ==========================================================
     @Test
-    void createProfesor_EmptyName_ThrowsIllegalArgumentException() {
-        // Given
-        ProfesorDTO dtoInvalido = new ProfesorDTO();
-        dtoInvalido.nombre = ""; // vacío
-        dtoInvalido.especialidad = "Física";
+    void crearProfesor_sinNombre_lanzaExcepcion() {
+        ProfesorDTO sinNombre = new ProfesorDTO();
+        sinNombre.setNombre("");
+        sinNombre.setEspecialidad("Historia");
 
-        // When + Then
-        assertThatThrownBy(() -> profesorService.createProfesor(dtoInvalido))
+        assertThatThrownBy(() -> profesorService.crearProfesor(sinNombre))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("El nombre es obligatorio.");
+                .hasMessage("El nombre del profesor es obligatorio.");
     }
 
-    // ========================================================
-    // 4. Test: cursosProfesor() - profesor con cursos
-    // ========================================================
+    // ==========================================================
+    // 4️⃣ Test: asignaturasPorProfesor() correcto
+    // ==========================================================
     @Test
-    void cursosProfesor_ProfesorConCursos_ReturnsListaDeCursos() {
-        // Given
-        Curso curso1 = new Curso();
-        curso1.setTitulo("Álgebra");
-        curso1.setDescripcion("Curso básico de álgebra");
+    void asignaturasPorProfesor_devuelveListaAsignaturas() {
+        Curso curso = new Curso();
+        curso.setNombre("2º ESO");
 
-        Curso curso2 = new Curso();
-        curso2.setTitulo("Cálculo");
-        curso2.setDescripcion("Cálculo avanzado");
+        Asignatura a1 = new Asignatura();
+        a1.setTitulo("Historia Moderna");
+        a1.setProfesor(profesor);
+        a1.setCurso(curso);
 
-        profesor.setCursos(Arrays.asList(curso1, curso2));
+        Asignatura a2 = new Asignatura();
+        a2.setTitulo("Filosofía Moderna");
+        a2.setProfesor(profesor);
+        a2.setCurso(curso);
 
-        when(profesorRepository.findByNombre("Ana García"))
-                .thenReturn(Optional.of(profesor));
+        when(profesorRepository.findByNombre("Luis Pérez")).thenReturn(Optional.of(profesor));
+        when(asignaturaRepository.findAll()).thenReturn(Arrays.asList(a1, a2));
 
-        // When
-        List<CursosProfesorDTO> resultado = profesorService.cursosProfesor("Ana García");
+        List<AsignaturasProfesorDTO> resultado = profesorService.asignaturasPorProfesor("Luis Pérez");
 
-        // Then
         assertThat(resultado).hasSize(2);
-        assertThat(resultado.get(0).nombreProfesor).isEqualTo("Ana García");
-        assertThat(resultado.get(0).tituloCurso).isEqualTo("Álgebra");
-        assertThat(resultado.get(1).tituloCurso).isEqualTo("Cálculo");
-        assertThat(resultado.get(0).profesor_id).isEqualTo(1L);
+        assertThat(resultado.get(0).getNombreProfesor()).isEqualTo("Luis Pérez");
+        assertThat(resultado.get(0).getTituloAsignatura()).isEqualTo("Historia Moderna");
+        assertThat(resultado.get(0).getCurso()).isEqualTo("2º ESO");
     }
 
-    // ========================================================
-    // 5. Test: cursosProfesor() - profesor SIN cursos
-    // ========================================================
+    // ==========================================================
+    // 5️⃣ Test: asignaturasPorProfesor() profesor no existe → excepción
+    // ==========================================================
     @Test
-    void cursosProfesor_ProfesorSinCursos_ReturnsListaConAsteriscos() {
-        // Given
-        profesor.setCursos(new ArrayList<>()); // lista vacía
+    void asignaturasPorProfesor_profesorNoExiste_lanzaExcepcion() {
+        when(profesorRepository.findByNombre("Desconocido")).thenReturn(Optional.empty());
 
-        when(profesorRepository.findByNombre("Ana García"))
-                .thenReturn(Optional.of(profesor));
-
-        // When
-        List<CursosProfesorDTO> resultado = profesorService.cursosProfesor("Ana García");
-
-        // Then
-        assertThat(resultado).hasSize(1);
-        CursosProfesorDTO dto = resultado.get(0);
-        assertThat(dto.nombreProfesor).isEqualTo("Ana García");
-        assertThat(dto.tituloCurso).isEqualTo("*****");
-        assertThat(dto.descripcionCurso).isEqualTo("*****");
-        assertThat(dto.profesor_id).isEqualTo(1L);
+        assertThatThrownBy(() -> profesorService.asignaturasPorProfesor("Desconocido"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No existe un profesor con el nombre: Desconocido");
     }
 
-    // ========================================================
-    // 6. Test: cursosProfesor() - profesor no existe → excepción
-    // ========================================================
+    // ==========================================================
+    // 6️⃣ Test: asignaturasPorProfesor() sin asignaturas → lista vacía
+    // ==========================================================
     @Test
-    void cursosProfesor_ProfesorNoEncontrado_ThrowsRuntimeException() {
-        // Given
-        when(profesorRepository.findByNombre("Desconocido"))
-                .thenReturn(Optional.empty());
+    void asignaturasPorProfesor_sinAsignaturas_devuelveVacio() {
+        when(profesorRepository.findByNombre("Luis Pérez")).thenReturn(Optional.of(profesor));
+        when(asignaturaRepository.findAll()).thenReturn(List.of());
 
-        // When + Then
-        assertThatThrownBy(() -> profesorService.cursosProfesor("Desconocido"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("No existe un profesor con ese nombre: Desconocido");
+        List<AsignaturasProfesorDTO> resultado = profesorService.asignaturasPorProfesor("Luis Pérez");
+
+        assertThat(resultado).isEmpty();
     }
 }
+

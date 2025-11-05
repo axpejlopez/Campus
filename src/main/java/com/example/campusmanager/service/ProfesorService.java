@@ -1,91 +1,54 @@
 package com.example.campusmanager.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.example.campusmanager.domain.Asignatura;
+import com.example.campusmanager.domain.Profesor;
+import com.example.campusmanager.dto.AsignaturasProfesorDTO;
+import com.example.campusmanager.dto.ProfesorDTO;
+import com.example.campusmanager.repository.AsignaturaRepository;
+import com.example.campusmanager.repository.ProfesorRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.example.campusmanager.domain.Curso;
-import com.example.campusmanager.domain.Profesor;
-import com.example.campusmanager.dto.CursosProfesorDTO;
-import com.example.campusmanager.dto.ProfesorDTO;
-import com.example.campusmanager.repository.CursoRepository;
-import com.example.campusmanager.repository.ProfesorRepository;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProfesorService {
 
-	@Autowired
-	private ProfesorRepository profesorRepository;
+    private final ProfesorRepository profesorRepository;
+    private final AsignaturaRepository asignaturaRepository;
 
-	@Autowired
-	private CursoRepository cursoRepository;
+    public List<Profesor> listarProfesores() {
+        return profesorRepository.findAll();
+    }
 
-	public List<Profesor> getProfesores() {
-		return profesorRepository.findAll();
-	}
+    public Profesor crearProfesor(ProfesorDTO dto) {
+        if (dto.getNombre() == null || dto.getNombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre del profesor es obligatorio.");
+        }
 
-	public Profesor createProfesor(ProfesorDTO profesorDTO) {
+        Profesor profesor = new Profesor();
+        profesor.setNombre(dto.getNombre());
+        profesor.setEspecialidad(dto.getEspecialidad());
 
-		if (profesorDTO.nombre.isEmpty()) {
-			throw new IllegalArgumentException("El nombre es obligatorio.");
-		}
+        return profesorRepository.save(profesor);
+    }
 
-		Profesor profesor = new Profesor();
+    public List<AsignaturasProfesorDTO> asignaturasPorProfesor(String nombreProfesor) {
+        Profesor profesor = profesorRepository.findByNombre(nombreProfesor)
+                .orElseThrow(() -> new IllegalArgumentException("No existe un profesor con el nombre: " + nombreProfesor));
 
-		profesor.setNombre(profesorDTO.nombre);
-
-		if (!profesorDTO.especialidad.isEmpty()) {
-			profesor.setEspecialidad(profesorDTO.especialidad);
-		}
-
-		return profesorRepository.save(profesor);
-
-	}
-
-	/**
-	 * 
-	 * @param nombre
-	 * @return
-	 * 
-	 *         Devuelve la lista de cursos que da un profesor.
-	 */
-	public List<CursosProfesorDTO> cursosProfesor(String nombre) {
-
-		Profesor profesor = profesorRepository.findByNombre(nombre)
-				.orElseThrow(() -> new RuntimeException("No existe un profesor con ese nombre: " + nombre));
-
-		CursosProfesorDTO cursoProfesorDTO = new CursosProfesorDTO();
-		List<CursosProfesorDTO> listCursosProfesorDTO = new ArrayList<>();
-
-		if (profesor.getCursos().isEmpty()) {
-			cursoProfesorDTO.profesor_id = profesor.getId();
-			cursoProfesorDTO.nombreProfesor = profesor.getNombre();
-			cursoProfesorDTO.tituloCurso = "*****";
-			cursoProfesorDTO.descripcionCurso = "*****";
-
-			listCursosProfesorDTO.add(cursoProfesorDTO);
-		} else {
-			List<Curso> listCursos = profesor.getCursos();
-			for (Curso c : listCursos) {
-
-				cursoProfesorDTO.profesor_id = profesor.getId();
-				cursoProfesorDTO.nombreProfesor = profesor.getNombre();
-				cursoProfesorDTO.tituloCurso = c.getTitulo();
-				cursoProfesorDTO.descripcionCurso = c.getDescripcion();
-
-				listCursosProfesorDTO.add(cursoProfesorDTO);
-
-			}
-
-		}
-
-		return listCursosProfesorDTO;
-
-	}
-
+        return asignaturaRepository.findAll().stream()
+                .filter(a -> a.getProfesor().equals(profesor))
+                .map(a -> AsignaturasProfesorDTO.builder()
+                        .profesorId(profesor.getId())
+                        .nombreProfesor(profesor.getNombre())
+                        .tituloAsignatura(a.getTitulo())
+                        .curso(a.getCurso().getNombre())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }
+
+

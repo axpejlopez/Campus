@@ -1,9 +1,12 @@
 package com.example.campusmanager.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class ProfesorDTO {
+@Builder
+public class CursoDTO {
+    private Long id;
     private String nombre;
-    private String especialidad;
 }
+

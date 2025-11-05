@@ -3,6 +3,8 @@ package com.example.campusmanager.service;
 import com.example.campusmanager.domain.Alumno;
 import com.example.campusmanager.domain.Curso;
 import com.example.campusmanager.domain.Matricula;
+import com.example.campusmanager.dto.MatriculaRequestDTO;
+import com.example.campusmanager.dto.MatriculaResponseDTO;
 import com.example.campusmanager.repository.AlumnoRepository;
 import com.example.campusmanager.repository.CursoRepository;
 import com.example.campusmanager.repository.MatriculaRepository;
@@ -78,7 +80,7 @@ public class MatriculaService {
             document.open();
 
             Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-            Paragraph title = new Paragraph("Alumnos matriculados en el curso: " + curso.getTitulo(), titleFont);
+            Paragraph title = new Paragraph("Alumnos matriculados en el curso: " + curso.getNombre(), titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(20);
             document.add(title);
@@ -109,4 +111,46 @@ public class MatriculaService {
 
         return out.toByteArray();
     }
+    
+ // 🔹 NUEVO MÉTODO con DTOs
+    public MatriculaResponseDTO crearDesdeDTO(MatriculaRequestDTO dto) {
+        if (dto.getAlumnoId() == null || dto.getCursoId() == null || dto.getFechaMatricula() == null) {
+            throw new IllegalArgumentException("Alumno, curso y fecha son obligatorios.");
+        }
+
+        if (repo.existsByAlumno_IdAndCurso_Id(dto.getAlumnoId(), dto.getCursoId())) {
+            throw new IllegalArgumentException("El alumno ya está matriculado en ese curso.");
+        }
+
+        Alumno alumno = alumnoRepo.findById(dto.getAlumnoId())
+                .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado."));
+        Curso curso = cursoRepo.findById(dto.getCursoId())
+                .orElseThrow(() -> new IllegalArgumentException("Curso no encontrado."));
+
+        Matricula matricula = new Matricula(alumno, curso, dto.getFechaMatricula());
+        Matricula guardada = repo.save(matricula);
+
+        return MatriculaResponseDTO.builder()
+                .id(guardada.getId())
+                .alumnoNombre(alumno.getNombre())
+                .cursoNombre(curso.getNombre())
+                .fechaMatricula(dto.getFechaMatricula().toString())
+                .build();
+    }
+    
+    public List<MatriculaResponseDTO> obtenerMatriculasPorAlumno(Long alumnoId) {
+        Alumno alumno = alumnoRepo.findById(alumnoId)
+                .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado."));
+
+        List<Matricula> matriculas = repo.findByAlumno_Id(alumno.getId());
+
+        return matriculas.stream().map(m -> new MatriculaResponseDTO(
+                m.getId(),
+                m.getAlumno().getNombre(),
+                m.getCurso().getNombre(),
+                m.getFechaMatricula()
+        )).collect(Collectors.toList());
+    }
+
+
 }

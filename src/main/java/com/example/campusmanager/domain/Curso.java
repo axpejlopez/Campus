@@ -1,44 +1,25 @@
 package com.example.campusmanager.domain;
 
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "curso")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Curso {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Column(nullable = false, unique = true, length = 150)
-    private String titulo;
+    @Column(nullable = false, unique = true, length = 50)
+    private String nombre; // Ej: "1º ESO", "2º ESO", etc.
 
-    @NotBlank
-    @Column(nullable = false, length = 1000)
-    private String descripcion;
-
-    @NotBlank
+    // 🔹 Relación muchos-a-uno con Profesor
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "profesor_id")
+    @JoinColumn(name = "profesor_id", nullable = false)
     private Profesor profesor;
-    
-    
-    public Long getId() { return id; }
-    public String getTitulo() { return titulo; }
-    public String getDescripcion() { return descripcion; }
-
-    public void setId(Long id) { this.id = id; }
-    public void setTitulo(String titulo) { this.titulo = titulo; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 }

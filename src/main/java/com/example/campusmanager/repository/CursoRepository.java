@@ -1,16 +1,11 @@
 package com.example.campusmanager.repository;
 
+import com.example.campusmanager.domain.Curso;
+import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import com.example.campusmanager.domain.Curso;
-
-
-
-@Repository
 public interface CursoRepository extends JpaRepository<Curso, Long> {
-    boolean existsByTitulo(String titulo);
-    
+    List<Curso> findByProfesor_Id(Long profesorId);
 }
+
+
